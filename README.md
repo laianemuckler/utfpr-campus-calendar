@@ -25,7 +25,7 @@ Funcionalidades principais:
 ![Protótipo](./docs/prototype.png)
 
 ### Arquivo vetorial original
-[Ver versão em SVG](./docs/prototype.svg)
+<a href="./docs/prototype.svg" target="_blank">Ver versão vetorial (SVG)</a>
 
 ---
 
