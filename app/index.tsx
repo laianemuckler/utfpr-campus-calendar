@@ -4,103 +4,148 @@ import {
   Text,
   TextInput,
   Pressable,
-  StyleSheet,
   ScrollView,
   Image,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-
-const campusList = [
-  'Apucarana', 'Campo Mourão', 'Cornélio Procópio', 'Curitiba',
-  'Dois Vizinhos', 'Francisco Beltrão', 'Guarapuava', 'Londrina',
-  'Medianeira', 'Pato Branco', 'Ponta Grossa', 'Santa Helena', 'Toledo',
-];
+import { useAuth } from '../contexts/AuthContext';
+import { loginStyles } from '../styles/loginStyles';
+import { CAMPUS_LIST, DEFAULT_CAMPUS } from '../utils/constants';
 
 export default function Login() {
   const router = useRouter();
+  const { login, signup } = useAuth();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [campus, setCampus] = useState('Dois Vizinhos');
+  const [campus, setCampus] = useState(DEFAULT_CAMPUS);
   const [campusOpen, setCampusOpen] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Preencha email e senha');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await login(email, password);
+      router.replace('/home');
+    } catch (error: any) {
+      Alert.alert('Erro no login', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Preencha email e senha');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await signup(email, password);
+      Alert.alert('Sucesso', 'Conta criada! Você será redirecionado...');
+      setTimeout(() => router.replace('/home'), 1500);
+    } catch (error: any) {
+      Alert.alert('Erro', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
+    <ScrollView contentContainerStyle={loginStyles.container}>
+      <View style={loginStyles.card}>
 
         {/* Header preto */}
-        <View style={styles.header}>
+        <View style={loginStyles.header}>
           <Image source={require('../assets/utfpr1.png')}
           style={{ width: 200, height: 80, resizeMode: 'contain' }} />
-          <Text style={styles.title}>Agenda Acadêmica</Text>
+          <Text style={loginStyles.title}>Agenda Acadêmica</Text>
         </View>
 
         {/* Form */}
-        <View style={styles.form}>
+        <View style={loginStyles.form}>
 
-          <Text style={styles.label}>E-MAIL INSTITUCIONAL</Text>
+          <Text style={loginStyles.label}>E-MAIL INSTITUCIONAL</Text>
           <TextInput
-            style={styles.input}
+            style={loginStyles.input}
             value={email}
             onChangeText={setEmail}
             placeholder="aluno@utfpr.edu.br"
             placeholderTextColor="#B4B2A9"
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!isLoading}
           />
 
-          <Text style={styles.label}>SENHA</Text>
+          <Text style={loginStyles.label}>SENHA</Text>
           <TextInput
-            style={styles.input}
+            style={loginStyles.input}
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
             placeholderTextColor="#B4B2A9"
             secureTextEntry
+            editable={!isLoading}
           />
 
           <Pressable
-            style={styles.btnPrimary}
-            onPress={() => router.push('/home')}
+            style={[loginStyles.btnPrimary, isLoading && loginStyles.btnDisabled]}
+            onPress={isSignUp ? handleSignUp : handleLogin}
+            disabled={isLoading}
           >
-            <Text style={styles.btnPrimaryText}>Entrar</Text>
+            {isLoading ? (
+              <ActivityIndicator color="#1a1a1a" />
+            ) : (
+              <Text style={loginStyles.btnPrimaryText}>
+                {isSignUp ? 'Criar conta' : 'Entrar'}
+              </Text>
+            )}
           </Pressable>
 
-          <Pressable style={styles.btnLink}>
-            <Text style={styles.btnLinkText}>Esqueci minha senha</Text>
+          <Pressable onPress={() => setIsSignUp(!isSignUp)} disabled={isLoading}>
+            <Text style={loginStyles.btnLinkText}>
+              {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Criar uma'}
+            </Text>
           </Pressable>
 
           {/* Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ou</Text>
-            <View style={styles.dividerLine} />
+          <View style={loginStyles.divider}>
+            <View style={loginStyles.dividerLine} />
+            <Text style={loginStyles.dividerText}>ou</Text>
+            <View style={loginStyles.dividerLine} />
           </View>
 
-          <Pressable style={styles.btnSecondary}>
-            <Text style={styles.btnSecondaryText}>Entrar com Portal UTFPR</Text>
-          </Pressable>
-
           {/* Campus selector */}
-          <Text style={[styles.label, { textAlign: 'center', marginTop: 24 }]}>
+          <Text style={[loginStyles.label, { textAlign: 'center', marginTop: 24 }]}>
             SELECIONE SEU CAMPUS
           </Text>
           <Pressable
-            style={styles.input}
+            style={loginStyles.input}
             onPress={() => setCampusOpen(!campusOpen)}
+            disabled={isLoading}
           >
             <Text style={{ color: '#2C2C2A' }}>{campus}</Text>
           </Pressable>
 
           {campusOpen && (
-            <View style={styles.dropdown}>
+            <View style={loginStyles.dropdown}>
               <ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
-                {campusList.map((c) => (
+                {CAMPUS_LIST.map((c) => (
                   <Pressable
                     key={c}
-                    style={styles.dropdownItem}
+                    style={loginStyles.dropdownItem}
                     onPress={() => { setCampus(c); setCampusOpen(false); }}
                   >
-                    <Text style={styles.dropdownItemText}>{c}</Text>
+                    <Text style={loginStyles.dropdownItemText}>{c}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -112,126 +157,3 @@ export default function Login() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: '#F5F4F0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    backgroundColor: 'white',
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  header: {
-    backgroundColor: '#1a1a1a',
-    paddingTop: 40,
-    paddingBottom: 32,
-    alignItems: 'center',
-  },
-  logo: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: '#F5C200',
-    marginBottom: 4,
-  },
-  logoSub: {
-    fontSize: 9,
-    color: '#888780',
-    letterSpacing: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#F5C200',
-    marginTop: 16,
-  },
-  form: {
-    padding: 32,
-  },
-  label: {
-    fontSize: 8,
-    color: '#888780',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#D3D1C7',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#2C2C2A',
-    marginBottom: 16,
-    justifyContent: 'center',
-  },
-  btnPrimary: {
-    backgroundColor: '#F5C200',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  btnPrimaryText: {
-    color: '#1a1a1a',
-    fontWeight: '500',
-    fontSize: 15,
-  },
-  btnLink: {
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  btnLinkText: {
-    color: '#888780',
-    fontSize: 12,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#D3D1C7',
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    color: '#B4B2A9',
-    fontSize: 12,
-  },
-  btnSecondary: {
-    borderWidth: 1,
-    borderColor: '#D3D1C7',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  btnSecondaryText: {
-    color: '#444441',
-    fontSize: 14,
-  },
-  dropdown: {
-    borderWidth: 1,
-    borderColor: '#D3D1C7',
-    borderRadius: 10,
-    backgroundColor: 'white',
-    marginTop: -8,
-  },
-  dropdownItem: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#D3D1C7',
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: '#2C2C2A',
-  },
-});
