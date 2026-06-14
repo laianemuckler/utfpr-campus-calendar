@@ -1,25 +1,16 @@
+import { useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Redirect } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 
-/**
- * Hook para proteger telas que requerem autenticação
- * Se não está logado, redireciona para login
- */
 export function useProtectedRoute() {
   const { user, loading } = useAuth();
+  const router = useRouter();
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#F5C200" />
-      </View>
-    );
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/');
+    }
+  }, [user, loading]);
 
-  if (!user) {
-    return <Redirect href="/" />;
-  }
-
-  return null; // Tudo ok, renderiza a tela
+  return { user, loading };
 }

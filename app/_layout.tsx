@@ -1,4 +1,10 @@
-// Deixar vazio ou deletar
-// O Expo Router gerenciará os arquivos individuais
+import { Stack } from 'expo-router';
+import { AuthProvider } from '../contexts/AuthContext';
 
-
+export default function Layout() {
+  return (
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </AuthProvider>
+  );
+}
