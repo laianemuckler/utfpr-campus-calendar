@@ -1,7 +1,14 @@
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useProtectedRoute } from '../utils/useProtectedRoute';
+import { BottomNav } from '../components/BottomNav';
 
-const events = [
+export default function Home() {
+  // Verificar se está autenticado
+  const protectedRoute = useProtectedRoute();
+  if (protectedRoute) return protectedRoute;
+
+  const router = useRouter();
   {
     id: '1',
     title: 'Entrega de TCC',

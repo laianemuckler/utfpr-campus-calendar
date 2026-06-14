@@ -1,8 +1,12 @@
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 
-function RootNavigation() {
+/**
+ * Hook para proteger telas que requerem autenticação
+ * Se não está logado, redireciona para login
+ */
+export function useProtectedRoute() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -17,14 +21,5 @@ function RootNavigation() {
     return <Redirect href="/" />;
   }
 
-  // Se tá logado, Expo Router renderiza naturalmente
-  return null;
-}
-
-export default function App() {
-  return (
-    <AuthProvider>
-      <RootNavigation />
-    </AuthProvider>
-  );
+  return null; // Tudo ok, renderiza a tela
 }
