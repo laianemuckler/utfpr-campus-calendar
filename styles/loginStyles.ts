@@ -18,8 +18,8 @@ export const loginStyles = StyleSheet.create({
   },
   header: {
     backgroundColor: colors.primary,
-    paddingTop: 40,
-    paddingBottom: 32,
+    paddingTop: 80,
+    paddingBottom: 48,
     alignItems: 'center',
   },
   title: {
@@ -30,6 +30,7 @@ export const loginStyles = StyleSheet.create({
   },
   form: {
     padding: 32,
+    paddingBottom: 48,
   },
   label: {
     fontSize: 8,

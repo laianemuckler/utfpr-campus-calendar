@@ -45,3 +45,6 @@ export const MOCK_EVENTS = [
     color: '#F5C200',
   },
 ];
+
+export const DOMINIOS_UTFPR = ['@alunos.utfpr.edu.br', '@utfpr.edu.br'];
+

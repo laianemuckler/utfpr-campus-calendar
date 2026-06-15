@@ -12,22 +12,31 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { loginStyles } from '../styles/loginStyles';
-import { CAMPUS_LIST, DEFAULT_CAMPUS } from '../utils/constants';
+import {
+  DOMINIOS_UTFPR,
+} from '../utils/constants';
 
 export default function Login() {
   const router = useRouter();
   const { login, signup } = useAuth();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [campus, setCampus] = useState(DEFAULT_CAMPUS);
-  const [campusOpen, setCampusOpen] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Erro', 'Preencha email e senha');
+      return;
+    }
+
+    const emailValido = DOMINIOS_UTFPR.some((dominio) =>
+      email.endsWith(dominio),
+    );
+
+    if (!emailValido) {
+      Alert.alert('Email inválido', 'Use seu email institucional UTFPR');
       return;
     }
 
@@ -48,6 +57,21 @@ export default function Login() {
       return;
     }
 
+    const emailValido = DOMINIOS_UTFPR.some((dominio) =>
+      email.endsWith(dominio),
+    );
+
+    if (!emailValido) {
+      Alert.alert('Email inválido', 'Use seu email institucional UTFPR');
+      return;
+    }
+
+    // validação de senha mínima
+    if (password.length < 6) {
+      Alert.alert('Senha fraca', 'A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
     setIsLoading(true);
     try {
       await signup(email, password);
@@ -63,17 +87,17 @@ export default function Login() {
   return (
     <ScrollView contentContainerStyle={loginStyles.container}>
       <View style={loginStyles.card}>
-
         {/* Header preto */}
         <View style={loginStyles.header}>
-          <Image source={require('../assets/utfpr1.png')}
-          style={{ width: 200, height: 80, resizeMode: 'contain' }} />
+          <Image
+            source={require('../assets/utfpr1.png')}
+            style={{ width: 200, height: 80, resizeMode: 'contain' }}
+          />
           <Text style={loginStyles.title}>Agenda Acadêmica</Text>
         </View>
 
         {/* Form */}
         <View style={loginStyles.form}>
-
           <Text style={loginStyles.label}>E-MAIL INSTITUCIONAL</Text>
           <TextInput
             style={loginStyles.input}
@@ -98,7 +122,10 @@ export default function Login() {
           />
 
           <Pressable
-            style={[loginStyles.btnPrimary, isLoading && loginStyles.btnDisabled]}
+            style={[
+              loginStyles.btnPrimary,
+              isLoading && loginStyles.btnDisabled,
+            ]}
             onPress={isSignUp ? handleSignUp : handleLogin}
             disabled={isLoading}
           >
@@ -111,47 +138,14 @@ export default function Login() {
             )}
           </Pressable>
 
-          <Pressable onPress={() => setIsSignUp(!isSignUp)} disabled={isLoading}>
-            <Text style={loginStyles.btnLinkText}>
-              {isSignUp ? 'Já tem conta? Faça login' : 'Não tem conta? Criar uma'}
-            </Text>
-          </Pressable>
-
-          {/* Divider */}
-          <View style={loginStyles.divider}>
-            <View style={loginStyles.dividerLine} />
-            <Text style={loginStyles.dividerText}>ou</Text>
-            <View style={loginStyles.dividerLine} />
-          </View>
-
-          {/* Campus selector */}
-          <Text style={[loginStyles.label, { textAlign: 'center', marginTop: 24 }]}>
-            SELECIONE SEU CAMPUS
-          </Text>
-          <Pressable
-            style={loginStyles.input}
-            onPress={() => setCampusOpen(!campusOpen)}
+        <Pressable
+            onPress={() => router.push('/register')}
             disabled={isLoading}
           >
-            <Text style={{ color: '#2C2C2A' }}>{campus}</Text>
+            <Text style={loginStyles.btnLinkText}>
+              Não tem conta? Criar uma
+            </Text>
           </Pressable>
-
-          {campusOpen && (
-            <View style={loginStyles.dropdown}>
-              <ScrollView nestedScrollEnabled style={{ maxHeight: 200 }}>
-                {CAMPUS_LIST.map((c) => (
-                  <Pressable
-                    key={c}
-                    style={loginStyles.dropdownItem}
-                    onPress={() => { setCampus(c); setCampusOpen(false); }}
-                  >
-                    <Text style={loginStyles.dropdownItemText}>{c}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
         </View>
       </View>
     </ScrollView>
