@@ -12,6 +12,8 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { CAMPUS_LIST, DOMINIOS_UTFPR } from '../utils/constants';
+import { db } from '../firebaseConfig';
+import { ref, set } from 'firebase/database';
 
 const CURSOS = [
   'Engenharia de Software',
@@ -65,7 +67,9 @@ export default function Register() {
       return;
     }
 
-    const emailValido = DOMINIOS_UTFPR.some((dominio) => email.endsWith(dominio));
+    const emailValido = DOMINIOS_UTFPR.some((dominio) =>
+      email.endsWith(dominio),
+    );
     if (!emailValido) {
       Alert.alert('Email inválido', 'Use seu email institucional UTFPR');
       return;
@@ -103,7 +107,19 @@ export default function Register() {
 
     setIsLoading(true);
     try {
-      await signup(email, password);
+      const userCredential = await signup(email, password);
+
+      await set(ref(db, `users/${userCredential.user.uid}`), {
+        nome,
+        email,
+        campus,
+        tipo,
+        curso: tipo === 'aluno' ? curso : null,
+        periodo: tipo === 'aluno' ? periodo : null,
+        departamento: tipo === 'servidor' ? departamento : null,
+        criadoEm: new Date().toISOString(),
+      });
+
       Alert.alert('Sucesso', 'Conta criada com sucesso!');
       setTimeout(() => router.replace('/home'), 1500);
     } catch (error: any) {
@@ -116,7 +132,6 @@ export default function Register() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -127,7 +142,6 @@ export default function Register() {
         </View>
 
         <View style={styles.form}>
-
           {/* Nome */}
           <Text style={styles.label}>NOME COMPLETO</Text>
           <TextInput
@@ -183,15 +197,28 @@ export default function Register() {
               style={[styles.tipoBtn, tipo === 'aluno' && styles.tipoBtnActive]}
               onPress={() => setTipo('aluno')}
             >
-              <Text style={[styles.tipoBtnText, tipo === 'aluno' && styles.tipoBtnTextActive]}>
+              <Text
+                style={[
+                  styles.tipoBtnText,
+                  tipo === 'aluno' && styles.tipoBtnTextActive,
+                ]}
+              >
                 Aluno
               </Text>
             </Pressable>
             <Pressable
-              style={[styles.tipoBtn, tipo === 'servidor' && styles.tipoBtnActive]}
+              style={[
+                styles.tipoBtn,
+                tipo === 'servidor' && styles.tipoBtnActive,
+              ]}
               onPress={() => setTipo('servidor')}
             >
-              <Text style={[styles.tipoBtnText, tipo === 'servidor' && styles.tipoBtnTextActive]}>
+              <Text
+                style={[
+                  styles.tipoBtnText,
+                  tipo === 'servidor' && styles.tipoBtnTextActive,
+                ]}
+              >
                 Servidor
               </Text>
             </Pressable>
@@ -199,7 +226,10 @@ export default function Register() {
 
           {/* Campus */}
           <Text style={styles.label}>CAMPUS</Text>
-          <Pressable style={styles.input} onPress={() => setCampusOpen(!campusOpen)}>
+          <Pressable
+            style={styles.input}
+            onPress={() => setCampusOpen(!campusOpen)}
+          >
             <Text style={{ color: campus ? '#2C2C2A' : '#B4B2A9' }}>
               {campus || 'Selecione seu campus'}
             </Text>
@@ -208,7 +238,14 @@ export default function Register() {
             <View style={styles.dropdown}>
               <ScrollView nestedScrollEnabled style={{ maxHeight: 160 }}>
                 {CAMPUS_LIST.map((c) => (
-                  <Pressable key={c} style={styles.dropdownItem} onPress={() => { setCampus(c); setCampusOpen(false); }}>
+                  <Pressable
+                    key={c}
+                    style={styles.dropdownItem}
+                    onPress={() => {
+                      setCampus(c);
+                      setCampusOpen(false);
+                    }}
+                  >
                     <Text style={styles.dropdownText}>{c}</Text>
                   </Pressable>
                 ))}
@@ -220,7 +257,10 @@ export default function Register() {
           {tipo === 'aluno' && (
             <>
               <Text style={styles.label}>CURSO</Text>
-              <Pressable style={styles.input} onPress={() => setCursoOpen(!cursoOpen)}>
+              <Pressable
+                style={styles.input}
+                onPress={() => setCursoOpen(!cursoOpen)}
+              >
                 <Text style={{ color: curso ? '#2C2C2A' : '#B4B2A9' }}>
                   {curso || 'Selecione seu curso'}
                 </Text>
@@ -229,7 +269,14 @@ export default function Register() {
                 <View style={styles.dropdown}>
                   <ScrollView nestedScrollEnabled style={{ maxHeight: 160 }}>
                     {CURSOS.map((c) => (
-                      <Pressable key={c} style={styles.dropdownItem} onPress={() => { setCurso(c); setCursoOpen(false); }}>
+                      <Pressable
+                        key={c}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setCurso(c);
+                          setCursoOpen(false);
+                        }}
+                      >
                         <Text style={styles.dropdownText}>{c}</Text>
                       </Pressable>
                     ))}
@@ -238,7 +285,10 @@ export default function Register() {
               )}
 
               <Text style={styles.label}>PERÍODO</Text>
-              <Pressable style={styles.input} onPress={() => setPeriodoOpen(!periodoOpen)}>
+              <Pressable
+                style={styles.input}
+                onPress={() => setPeriodoOpen(!periodoOpen)}
+              >
                 <Text style={{ color: periodo ? '#2C2C2A' : '#B4B2A9' }}>
                   {periodo || 'Selecione o período'}
                 </Text>
@@ -247,7 +297,14 @@ export default function Register() {
                 <View style={styles.dropdown}>
                   <ScrollView nestedScrollEnabled style={{ maxHeight: 160 }}>
                     {PERIODOS.map((p) => (
-                      <Pressable key={p} style={styles.dropdownItem} onPress={() => { setPeriodo(p); setPeriodoOpen(false); }}>
+                      <Pressable
+                        key={p}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setPeriodo(p);
+                          setPeriodoOpen(false);
+                        }}
+                      >
                         <Text style={styles.dropdownText}>{p}</Text>
                       </Pressable>
                     ))}
@@ -261,7 +318,10 @@ export default function Register() {
           {tipo === 'servidor' && (
             <>
               <Text style={styles.label}>DEPARTAMENTO</Text>
-              <Pressable style={styles.input} onPress={() => setDepartamentoOpen(!departamentoOpen)}>
+              <Pressable
+                style={styles.input}
+                onPress={() => setDepartamentoOpen(!departamentoOpen)}
+              >
                 <Text style={{ color: departamento ? '#2C2C2A' : '#B4B2A9' }}>
                   {departamento || 'Selecione o departamento'}
                 </Text>
@@ -270,7 +330,14 @@ export default function Register() {
                 <View style={styles.dropdown}>
                   <ScrollView nestedScrollEnabled style={{ maxHeight: 160 }}>
                     {DEPARTAMENTOS.map((d) => (
-                      <Pressable key={d} style={styles.dropdownItem} onPress={() => { setDepartamento(d); setDepartamentoOpen(false); }}>
+                      <Pressable
+                        key={d}
+                        style={styles.dropdownItem}
+                        onPress={() => {
+                          setDepartamento(d);
+                          setDepartamentoOpen(false);
+                        }}
+                      >
                         <Text style={styles.dropdownText}>{d}</Text>
                       </Pressable>
                     ))}
@@ -296,7 +363,6 @@ export default function Register() {
           <Pressable onPress={() => router.back()}>
             <Text style={styles.btnLinkText}>Já tem conta? Faça login</Text>
           </Pressable>
-
         </View>
       </View>
     </ScrollView>
