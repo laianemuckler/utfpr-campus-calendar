@@ -19,14 +19,23 @@ const CATEGORY_COLORS: Record<string, string> = {
   feriado: '#888780',
 };
 
+const MONTH_NAMES_FULL = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+];
+
+function getTodayKey() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
 interface EventData {
   title: string;
   subtitle: string;
   description: string;
   category: string;
-  startDate: number;
-  endDate: number;
-  allDay: boolean;
+  startDate: string;
+  endDate: string;
   location: string | null;
   responsible: string | null;
   audience: string;
@@ -51,17 +60,21 @@ export default function EventDetail() {
     return () => unsubscribe();
   }, [id]);
 
-  const formatDate = (startDate: number, endDate: number) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-    if (startDate === endDate) return start.toLocaleDateString('pt-BR', options);
-    return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} a ${end.toLocaleDateString('pt-BR', options)}`;
+  const formatDate = (startDate: string, endDate: string) => {
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const [ey, em, ed] = endDate.split('-').map(Number);
+    if (startDate === endDate) {
+      return `${sd} de ${MONTH_NAMES_FULL[sm - 1]} de ${sy}`;
+    }
+    return `${sd} de ${MONTH_NAMES_FULL[sm - 1]} a ${ed} de ${MONTH_NAMES_FULL[em - 1]} de ${ey}`;
   };
 
-  const getDaysLeft = (startDate: number) => {
-    const now = new Date().setHours(0, 0, 0, 0);
-    const diff = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+  const getDaysLeft = (startDate: string) => {
+    const todayKey = getTodayKey();
+    const diff = Math.ceil(
+      (new Date(startDate + 'T00:00:00').getTime() - new Date(todayKey + 'T00:00:00').getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
     if (diff < 0) return 'Encerrado';
     if (diff === 0) return 'Hoje';
     if (diff === 1) return '1 dia';
@@ -98,7 +111,6 @@ export default function EventDetail() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>← Voltar</Text>
@@ -117,7 +129,6 @@ export default function EventDetail() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Detalhes */}
         <Text style={styles.sectionLabel}>DETALHES</Text>
         <View style={styles.detailsBox}>
           {details.map((item, index) => (
@@ -131,7 +142,6 @@ export default function EventDetail() {
           ))}
         </View>
 
-        {/* Descrição */}
         {event.description && (
           <>
             <Text style={styles.sectionLabel}>DESCRIÇÃO</Text>
@@ -141,17 +151,13 @@ export default function EventDetail() {
           </>
         )}
 
-        {/* Countdown */}
         <View style={styles.countdown}>
-          <Text style={styles.countdownLabel}>
-            {isEncerrado ? '' : 'faltam'}
-          </Text>
+          <Text style={styles.countdownLabel}>{isEncerrado ? '' : 'faltam'}</Text>
           <Text style={[styles.countdownValue, isEncerrado && { color: '#888780' }]}>
             {daysLeft}
           </Text>
         </View>
 
-        {/* Botões */}
         <View style={styles.actions}>
           <Pressable style={styles.btnSecondary}>
             <Text style={styles.btnSecondaryText}>🔔 Lembrete</Text>
@@ -183,13 +189,7 @@ const styles = StyleSheet.create({
   badgeWrapper: { alignItems: 'center', marginBottom: 12 },
   badge: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20 },
   badgeText: { color: 'white', fontSize: 10, letterSpacing: 1 },
-  title: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
+  title: { color: 'white', fontSize: 20, fontWeight: '500', textAlign: 'center', marginBottom: 8 },
   date: { color: '#F5C200', fontSize: 12, textAlign: 'center', marginBottom: 4 },
   sub: { color: '#888780', fontSize: 12, textAlign: 'center' },
   content: { padding: 24, paddingBottom: 100 },
@@ -208,15 +208,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E8E6DF',
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-  },
-  detailRowBorder: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#D3D1C7',
-  },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
+  detailRowBorder: { borderBottomWidth: 0.5, borderBottomColor: '#D3D1C7' },
   detailLabel: { fontSize: 12, color: '#888780' },
   detailValue: { fontSize: 12, color: '#2C2C2A', textAlign: 'right', flex: 1, marginLeft: 8 },
   descriptionBox: {
