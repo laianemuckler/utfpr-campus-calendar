@@ -1,65 +1,100 @@
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { ref, onValue } from 'firebase/database';
+import { db } from '../../firebaseConfig';
+import { BottomNav } from '../../components/BottomNav';
 
-const events = [
-  {
-    id: '1',
-    type: 'PRAZO',
-    typeColor: '#E24B4A',
-    title: 'Entrega de TCC',
-    date: '13 de maio de 2025',
-    course: 'Engenharia de Software',
-    location: 'Coordenação · Sala B-204',
-    countdown: '2 dias',
-    details: [
-      { label: 'Horário', value: '08h às 17h' },
-      { label: 'Local', value: 'Sala B-204' },
-      { label: 'Responsável', value: 'Coord. de Curso' },
-      { label: 'Público', value: '4º e 5º períodos' },
-    ],
-    description: 'Prazo final para entrega da versão final do Trabalho de Conclusão de Curso na coordenação do curso.',
-  },
-  {
-    id: '2',
-    type: 'EVENTO',
-    typeColor: '#F5C200',
-    title: 'Semana Acadêmica',
-    date: '15 a 19 de maio de 2025',
-    course: 'Todos os cursos',
-    location: 'Campus · Auditório Principal',
-    countdown: '4 dias',
-    details: [
-      { label: 'Horário', value: '08h às 22h' },
-      { label: 'Local', value: 'Auditório Principal' },
-      { label: 'Responsável', value: 'Diretoria Acadêmica' },
-      { label: 'Público', value: 'Todos os alunos' },
-    ],
-    description: 'Semana de palestras, workshops e atividades culturais abertas a todos os alunos do campus.',
-  },
-  {
-    id: '3',
-    type: 'PRAZO',
-    typeColor: '#E24B4A',
-    title: 'Matrícula 2025/2',
-    date: '02 a 06 de junho de 2025',
-    course: 'Todos os cursos',
-    location: 'Portal do Aluno',
-    countdown: '24 dias',
-    details: [
-      { label: 'Horário', value: 'Até as 23h59' },
-      { label: 'Local', value: 'Portal do Aluno' },
-      { label: 'Responsável', value: 'Secretaria Acadêmica' },
-      { label: 'Público', value: 'Todos os alunos' },
-    ],
-    description: 'Período de solicitação de matrícula para o segundo semestre de 2025 via portal do aluno.',
-  },
-];
+const CATEGORY_LABELS: Record<string, string> = {
+  prazo: 'PRAZO',
+  evento: 'EVENTO',
+  matricula: 'MATRÍCULA',
+  feriado: 'FERIADO',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  prazo: '#E24B4A',
+  evento: '#F5C200',
+  matricula: '#7F77DD',
+  feriado: '#888780',
+};
+
+interface EventData {
+  title: string;
+  subtitle: string;
+  description: string;
+  category: string;
+  startDate: number;
+  endDate: number;
+  allDay: boolean;
+  location: string | null;
+  responsible: string | null;
+  audience: string;
+  curso: string | null;
+  urgent: boolean;
+}
 
 export default function EventDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const [event, setEvent] = useState<EventData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const event = events.find((e) => e.id === id) ?? events[0];
+  useEffect(() => {
+    const eventRef = ref(db, `events/${id}`);
+    const unsubscribe = onValue(eventRef, (snapshot) => {
+      if (snapshot.exists()) {
+        setEvent(snapshot.val());
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [id]);
+
+  const formatDate = (startDate: number, endDate: number) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+    if (startDate === endDate) return start.toLocaleDateString('pt-BR', options);
+    return `${start.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })} a ${end.toLocaleDateString('pt-BR', options)}`;
+  };
+
+  const getDaysLeft = (startDate: number) => {
+    const now = new Date().setHours(0, 0, 0, 0);
+    const diff = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return 'Encerrado';
+    if (diff === 0) return 'Hoje';
+    if (diff === 1) return '1 dia';
+    return `${diff} dias`;
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#F5C200" />
+      </View>
+    );
+  }
+
+  if (!event) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={{ color: '#888780' }}>Evento não encontrado</Text>
+      </View>
+    );
+  }
+
+  const typeColor = CATEGORY_COLORS[event.category] || '#888780';
+  const typeLabel = CATEGORY_LABELS[event.category] || event.category.toUpperCase();
+  const daysLeft = getDaysLeft(event.startDate);
+  const isEncerrado = daysLeft === 'Encerrado';
+
+  const details = [
+    event.location && { label: 'Local', value: event.location },
+    event.responsible && { label: 'Responsável', value: event.responsible },
+    { label: 'Público', value: event.audience === 'geral' ? 'Todos os alunos' : event.curso || '-' },
+    { label: 'Tipo', value: typeLabel },
+  ].filter(Boolean) as { label: string; value: string }[];
 
   return (
     <View style={styles.container}>
@@ -69,27 +104,26 @@ export default function EventDetail() {
           <Text style={styles.backText}>← Voltar</Text>
         </Pressable>
         <View style={styles.badgeWrapper}>
-          <View style={[styles.badge, { backgroundColor: event.typeColor }]}>
-            <Text style={styles.badgeText}>{event.type}</Text>
+          <View style={[styles.badge, { backgroundColor: typeColor }]}>
+            <Text style={styles.badgeText}>{typeLabel}</Text>
           </View>
         </View>
         <Text style={styles.title}>{event.title}</Text>
-        <Text style={styles.date}>{event.date}</Text>
-        <Text style={styles.sub}>{event.course}</Text>
-        <Text style={styles.sub}>{event.location}</Text>
+        <Text style={styles.date}>{formatDate(event.startDate, event.endDate)}</Text>
+        <Text style={styles.sub}>
+          {event.audience === 'geral' ? 'Todos os cursos' : event.curso}
+        </Text>
+        {event.location && <Text style={styles.sub}>{event.location}</Text>}
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Detalhes */}
         <Text style={styles.sectionLabel}>DETALHES</Text>
         <View style={styles.detailsBox}>
-          {event.details.map((item, index) => (
+          {details.map((item, index) => (
             <View
               key={index}
-              style={[
-                styles.detailRow,
-                index < event.details.length - 1 && styles.detailRowBorder,
-              ]}
+              style={[styles.detailRow, index < details.length - 1 && styles.detailRowBorder]}
             >
               <Text style={styles.detailLabel}>{item.label}</Text>
               <Text style={styles.detailValue}>{item.value}</Text>
@@ -98,15 +132,23 @@ export default function EventDetail() {
         </View>
 
         {/* Descrição */}
-        <Text style={styles.sectionLabel}>DESCRIÇÃO</Text>
-        <View style={styles.descriptionBox}>
-          <Text style={styles.descriptionText}>{event.description}</Text>
-        </View>
+        {event.description && (
+          <>
+            <Text style={styles.sectionLabel}>DESCRIÇÃO</Text>
+            <View style={styles.descriptionBox}>
+              <Text style={styles.descriptionText}>{event.description}</Text>
+            </View>
+          </>
+        )}
 
         {/* Countdown */}
         <View style={styles.countdown}>
-          <Text style={styles.countdownLabel}>faltam</Text>
-          <Text style={styles.countdownValue}>{event.countdown}</Text>
+          <Text style={styles.countdownLabel}>
+            {isEncerrado ? '' : 'faltam'}
+          </Text>
+          <Text style={[styles.countdownValue, isEncerrado && { color: '#888780' }]}>
+            {daysLeft}
+          </Text>
         </View>
 
         {/* Botões */}
@@ -120,31 +162,14 @@ export default function EventDetail() {
         </View>
       </ScrollView>
 
-      {/* Bottom Nav */}
-      <View style={styles.bottomNav}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/home')}>
-          <Text style={styles.navIcon}>⌂</Text>
-          <Text style={styles.navLabel}>Início</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/calendar')}>
-          <Text style={styles.navIcon}>▦</Text>
-          <Text style={styles.navLabel}>Calendário</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/notices')}>
-          <Text style={styles.navIcon}>◎</Text>
-          <Text style={styles.navLabel}>Editais</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/profile')}>
-          <Text style={styles.navIcon}>◉</Text>
-          <Text style={styles.navLabel}>Perfil</Text>
-        </Pressable>
-      </View>
+      <BottomNav />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F4F0' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F4F0' },
   header: {
     backgroundColor: '#1a1a1a',
     paddingTop: 48,
@@ -156,11 +181,7 @@ const styles = StyleSheet.create({
   backBtn: { marginBottom: 16 },
   backText: { color: 'white', fontSize: 14 },
   badgeWrapper: { alignItems: 'center', marginBottom: 12 },
-  badge: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
+  badge: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20 },
   badgeText: { color: 'white', fontSize: 10, letterSpacing: 1 },
   title: {
     color: 'white',
@@ -197,7 +218,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#D3D1C7',
   },
   detailLabel: { fontSize: 12, color: '#888780' },
-  detailValue: { fontSize: 12, color: '#2C2C2A' },
+  detailValue: { fontSize: 12, color: '#2C2C2A', textAlign: 'right', flex: 1, marginLeft: 8 },
   descriptionBox: {
     backgroundColor: 'white',
     borderWidth: 1,
@@ -235,15 +256,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   btnPrimaryText: { color: '#1a1a1a', fontSize: 14, fontWeight: '500' },
-  bottomNav: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    borderTopWidth: 0.5,
-    borderTopColor: '#D3D1C7',
-    paddingVertical: 8,
-    paddingBottom: 16,
-  },
-  navItem: { flex: 1, alignItems: 'center' },
-  navIcon: { fontSize: 18, color: '#B4B2A9' },
-  navLabel: { fontSize: 9, color: '#B4B2A9', marginTop: 2 },
 });
