@@ -28,14 +28,20 @@ const CATEGORY_COLORS: Record<string, string> = {
   feriado: '#888780',
 };
 
+const MONTH_NAMES_SHORT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+function getTodayKey() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
 interface Event {
   id: string;
   title: string;
   subtitle: string;
   category: string;
-  startDate: number;
-  endDate: number;
-  allDay: boolean;
+  startDate: string;
+  endDate: string;
   location: string | null;
   audience: string;
   urgent: boolean;
@@ -48,39 +54,40 @@ export default function Search() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const eventsRef = ref(db, 'events');
+  useEffect(() => {
+    const eventsRef = ref(db, 'events');
+    const unsubscribe = onValue(eventsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const list = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        list.sort((a, b) => a.startDate.localeCompare(b.startDate));
+        setEvents(list);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error('Erro ao buscar eventos:', error);
+      setLoading(false);
+    });
 
-  const unsubscribe = onValue(eventsRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const data = snapshot.val();
-      const list = Object.keys(data).map((key) => ({
-        id: key,
-        ...data[key],
-      }));
-      list.sort((a, b) => a.startDate - b.startDate);
-      setEvents(list);
-    }
-    setLoading(false);
-  }, (error) => {
-    console.error('Erro ao buscar eventos:', error);
-    setLoading(false);
-  });
+    return () => unsubscribe();
+  }, []);
 
-  return () => unsubscribe();
-}, []);
-
-  const formatDate = (startDate: number, endDate: number) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    if (startDate === endDate) return start.toLocaleDateString('pt-BR', options);
-    return `${start.toLocaleDateString('pt-BR', options)} → ${end.toLocaleDateString('pt-BR', options)}`;
+  const formatDate = (startDate: string, endDate: string) => {
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const [, em, ed] = endDate.split('-').map(Number);
+    if (startDate === endDate) return `${sd} de ${MONTH_NAMES_SHORT[sm - 1]}`;
+    return `${sd} de ${MONTH_NAMES_SHORT[sm - 1]} → ${ed} de ${MONTH_NAMES_SHORT[em - 1]}`;
   };
 
-  const getDaysLeft = (startDate: number) => {
-    const now = new Date().setHours(0, 0, 0, 0);
-    const diff = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
+  const getDaysLeft = (startDate: string) => {
+    const todayKey = getTodayKey();
+    const diff = Math.ceil(
+      (new Date(startDate + 'T00:00:00').getTime() - new Date(todayKey + 'T00:00:00').getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
     if (diff < 0) return 'Encerrado';
     if (diff === 0) return 'Hoje';
     if (diff === 1) return 'Amanhã';
@@ -98,14 +105,11 @@ useEffect(() => {
 
   return (
     <View style={styles.container}>
-
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Buscar Eventos</Text>
         <Text style={styles.headerSub}>Encontre eventos e prazos</Text>
       </View>
 
-      {/* Search — fixo */}
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
           <Text style={styles.searchIcon}>🔍</Text>
@@ -124,7 +128,6 @@ useEffect(() => {
         </View>
       </View>
 
-      {/* Filters — fixo */}
       <View style={styles.filtersWrapper}>
         <ScrollView
           horizontal
@@ -145,7 +148,6 @@ useEffect(() => {
         </ScrollView>
       </View>
 
-      {/* Results — só esse rola */}
       {loading ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator size="large" color="#F5C200" />

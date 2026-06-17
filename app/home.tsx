@@ -1,12 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Pressable,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ref, get, onValue } from 'firebase/database';
 import { db } from '../firebaseConfig';
@@ -21,6 +14,13 @@ const CATEGORY_COLORS: Record<string, string> = {
   feriado: '#888780',
 };
 
+const MONTH_NAMES_SHORT = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+function getTodayKey() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+}
+
 interface UserData {
   nome: string;
   curso?: string;
@@ -34,8 +34,8 @@ interface Event {
   title: string;
   subtitle: string;
   category: string;
-  startDate: number;
-  endDate: number;
+  startDate: string;
+  endDate: string;
   urgent: boolean;
   audience: string;
   curso: string | null;
@@ -50,7 +50,6 @@ export default function Home() {
   const [otherEvents, setOtherEvents] = useState<Event[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
 
-  // busca dados do usuário
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user) return;
@@ -64,19 +63,20 @@ export default function Home() {
     fetchUserData();
   }, [user]);
 
-  // busca eventos do Firebase em tempo real
   useEffect(() => {
     const unsubscribe = onValue(ref(db, 'events'), (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
-        const now = new Date().setHours(0, 0, 0, 0);
+        const todayKey = getTodayKey();
 
         const list: Event[] = Object.keys(data).map((key) => ({
           id: key,
           ...data[key],
         }));
 
-        const future = list.sort((a, b) => a.startDate - b.startDate);
+        const future = list
+          .filter((e) => e.endDate >= todayKey)
+          .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
         setUpcomingEvents(future.slice(0, 3));
         setOtherEvents(future.slice(3, 6));
@@ -88,41 +88,33 @@ export default function Home() {
   }, []);
 
   const getInitials = (nome: string) =>
-    nome
-      .split(' ')
-      .slice(0, 2)
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase();
+    nome.split(' ').slice(0, 2).map((n) => n[0]).join('').toUpperCase();
 
   const getPrimeiroNome = (nome: string) => nome.split(' ')[0];
 
   const getSubtitle = () => {
     if (!userData) return '';
-    if (userData.tipo === 'aluno')
-      return `${userData.curso || ''} · ${userData.periodo || ''}`;
+    if (userData.tipo === 'aluno') return `${userData.curso || ''} · ${userData.periodo || ''}`;
     return `Servidor · ${userData.departamento || ''}`;
   };
 
-const getDaysLeft = (startDate: number) => {
-  const now = Date.now();
-  const diff = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
-  if (diff < 0) return `em ${Math.abs(diff)} dias`;
-  if (diff === 0) return 'Hoje';
-  if (diff === 1) return 'Amanhã';
-  return `em ${diff} dias`;
-};
+  const getDaysLeft = (startDate: string) => {
+    const todayKey = getTodayKey();
+    const diff = Math.ceil(
+      (new Date(startDate + 'T00:00:00').getTime() - new Date(todayKey + 'T00:00:00').getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    if (diff < 0) return 'Encerrado';
+    if (diff === 0) return 'Hoje';
+    if (diff === 1) return 'Amanhã';
+    return `em ${diff} dias`;
+  };
 
-  const formatDate = (startDate: number, endDate: number) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const options: Intl.DateTimeFormatOptions = {
-      day: 'numeric',
-      month: 'short',
-    };
-    if (startDate === endDate)
-      return start.toLocaleDateString('pt-BR', options);
-    return `${start.toLocaleDateString('pt-BR', options)} a ${end.toLocaleDateString('pt-BR', options)}`;
+  const formatDate = (startDate: string, endDate: string) => {
+    const [sy, sm, sd] = startDate.split('-').map(Number);
+    const [, em, ed] = endDate.split('-').map(Number);
+    if (startDate === endDate) return `${sd} de ${MONTH_NAMES_SHORT[sm - 1]}`;
+    return `${sd} a ${ed} de ${MONTH_NAMES_SHORT[em - 1]}`;
   };
 
   if (loading) return null;
@@ -157,38 +149,14 @@ const getDaysLeft = (startDate: number) => {
               style={[styles.eventCard, event.urgent && styles.eventCardUrgent]}
               onPress={() => router.push(`/event/${event.id}`)}
             >
-              <View
-                style={[
-                  styles.eventBorder,
-                  {
-                    backgroundColor:
-                      CATEGORY_COLORS[event.category] || '#888780',
-                  },
-                ]}
-              />
+              <View style={[styles.eventBorder, { backgroundColor: CATEGORY_COLORS[event.category] || '#888780' }]} />
               <View style={styles.eventBody}>
-                <Text
-                  style={[
-                    styles.eventTitle,
-                    event.urgent && styles.eventTitleUrgent,
-                  ]}
-                >
+                <Text style={[styles.eventTitle, event.urgent && styles.eventTitleUrgent]}>
                   {event.title}
                 </Text>
                 <Text style={styles.eventSubtitle}>{event.subtitle}</Text>
-                <View
-                  style={[
-                    styles.eventBadge,
-                    {
-                      backgroundColor: event.urgent
-                        ? '#E24B4A'
-                        : CATEGORY_COLORS[event.category],
-                    },
-                  ]}
-                >
-                  <Text style={styles.eventBadgeText}>
-                    {getDaysLeft(event.startDate)}
-                  </Text>
+                <View style={[styles.eventBadge, { backgroundColor: event.urgent ? '#E24B4A' : (CATEGORY_COLORS[event.category] || '#888780') }]}>
+                  <Text style={styles.eventBadgeText}>{getDaysLeft(event.startDate)}</Text>
                 </View>
               </View>
             </Pressable>
@@ -197,9 +165,7 @@ const getDaysLeft = (startDate: number) => {
 
         {otherEvents.length > 0 && (
           <>
-            <Text style={[styles.sectionLabel, { marginTop: 8 }]}>
-              OUTROS EVENTOS
-            </Text>
+            <Text style={[styles.sectionLabel, { marginTop: 8 }]}>OUTROS EVENTOS</Text>
             {otherEvents.map((event) => (
               <Pressable
                 key={event.id}
@@ -218,10 +184,7 @@ const getDaysLeft = (startDate: number) => {
           </>
         )}
 
-        <Pressable
-          style={styles.searchBtn}
-          onPress={() => router.push('/search')}
-        >
+        <Pressable style={styles.searchBtn} onPress={() => router.push('/search')}>
           <Text style={styles.searchBtnText}>🔍 Buscar eventos</Text>
         </Pressable>
       </ScrollView>
@@ -244,12 +207,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  headerTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
+  headerTitle: { color: 'white', fontSize: 18, fontWeight: '500', marginBottom: 4 },
   headerSub: { color: '#888780', fontSize: 12 },
   avatar: {
     width: 48,
@@ -281,20 +239,10 @@ const styles = StyleSheet.create({
   eventCardUrgent: { backgroundColor: '#1a1a1a', borderColor: '#1a1a1a' },
   eventBorder: { width: 4 },
   eventBody: { flex: 1, padding: 16 },
-  eventTitle: {
-    fontWeight: '500',
-    fontSize: 14,
-    color: '#2C2C2A',
-    marginBottom: 4,
-  },
+  eventTitle: { fontWeight: '500', fontSize: 14, color: '#2C2C2A', marginBottom: 4 },
   eventTitleUrgent: { color: 'white' },
   eventSubtitle: { fontSize: 12, color: '#888780', marginBottom: 6 },
-  eventBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
+  eventBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 },
   eventBadgeText: { color: 'white', fontSize: 10 },
   outroEventoCard: {
     flexDirection: 'row',
@@ -306,12 +254,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     alignItems: 'center',
   },
-  outroEventoTitle: {
-    fontWeight: '500',
-    fontSize: 14,
-    color: '#2C2C2A',
-    marginBottom: 4,
-  },
+  outroEventoTitle: { fontWeight: '500', fontSize: 14, color: '#2C2C2A', marginBottom: 4 },
   outroEventoSub: { fontSize: 12, color: '#888780' },
   outroEventoArrow: { fontSize: 24, color: '#B4B2A9', paddingRight: 16 },
   searchBtn: {
