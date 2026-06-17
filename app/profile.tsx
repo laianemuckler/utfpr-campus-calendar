@@ -1,61 +1,142 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { ref, get } from 'firebase/database';
+import { db } from '../firebaseConfig';
+import { useAuth } from '../contexts/AuthContext';
+import { BottomNav } from '../components/BottomNav';
 
-type NotificationKeys = 'prazos' | 'editais' | 'eventos';
-
-const turma = [
-  { label: 'Curso', value: 'Eng. de Software' },
-  { label: 'Período', value: '4º período' },
-  { label: 'Turno', value: 'Noturno' },
-];
+type NotificationKeys = 'prazos' | 'eventos';
 
 const notificationOptions: { key: NotificationKeys; title: string; subtitle: string }[] = [
   { key: 'prazos', title: 'Prazos do meu curso', subtitle: 'Aviso 2 dias antes' },
-  { key: 'editais', title: 'Novos editais', subtitle: 'Notificar ao publicar' },
-  { key: 'eventos', title: 'Eventos gerais', subtitle: 'Desativado' },
+  { key: 'eventos', title: 'Eventos gerais', subtitle: 'Notificar ao publicar' },
 ];
+
+interface UserData {
+  nome: string;
+  email: string;
+  campus: string;
+  tipo: string;
+  curso?: string;
+  periodo?: string;
+  departamento?: string;
+}
 
 export default function Profile() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState({
     prazos: true,
-    editais: true,
     eventos: false,
   });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+      try {
+        const snapshot = await get(ref(db, `users/${user.uid}`));
+        if (snapshot.exists()) {
+          setUserData(snapshot.val());
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados do usuário:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
 
   const toggle = (key: NotificationKeys) => {
     setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/');
+  };
+
+  // iniciais do nome pro avatar
+  const getInitials = (nome: string) => {
+    return nome
+      .split(' ')
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  const turma = userData?.tipo === 'aluno'
+    ? [
+        { label: 'Curso', value: userData?.curso || '-' },
+        { label: 'Período', value: userData?.periodo || '-' },
+        { label: 'Campus', value: userData?.campus || '-' },
+      ]
+    : [
+        { label: 'Departamento', value: userData?.departamento || '-' },
+        { label: 'Campus', value: userData?.campus || '-' },
+      ];
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#F5C200" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>AS</Text>
+          <Text style={styles.avatarText}>
+            {userData?.nome ? getInitials(userData.nome) : '?'}
+          </Text>
         </View>
-        <Text style={styles.name}>Ada da Silva</Text>
-        <Text style={styles.course}>Eng. de Software · 4º período</Text>
-        <Text style={styles.campus}>Campus Dois Vizinhos</Text>
+        <Text style={styles.name}>{userData?.nome || 'Usuário'}</Text>
+        <Text style={styles.course}>
+          {userData?.tipo === 'aluno'
+            ? `${userData?.curso || ''} · ${userData?.periodo || ''}`
+            : `Servidor · ${userData?.departamento || ''}`}
+        </Text>
+        <Text style={styles.campus}>Campus {userData?.campus || ''}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Minha Turma */}
-        <Text style={styles.sectionLabel}>MINHA TURMA</Text>
+        <Text style={styles.sectionLabel}>
+          {userData?.tipo === 'aluno' ? 'MINHA TURMA' : 'MEUS DADOS'}
+        </Text>
         <View style={styles.box}>
           {turma.map((item, index) => (
             <View
               key={index}
-              style={[
-                styles.row,
-                index < turma.length - 1 && styles.rowBorder,
-              ]}
+              style={[styles.row, index < turma.length - 1 && styles.rowBorder]}
             >
               <Text style={styles.rowLabel}>{item.label}</Text>
               <Text style={styles.rowValue}>{item.value}</Text>
             </View>
           ))}
+        </View>
+
+        {/* Email */}
+        <Text style={styles.sectionLabel}>CONTA</Text>
+        <View style={styles.box}>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Email</Text>
+            <Text style={styles.rowValue}>{userData?.email || ''}</Text>
+          </View>
+          <View style={[styles.row, styles.rowBorder]}>
+            <Text style={styles.rowLabel}>Tipo</Text>
+            <Text style={styles.rowValue}>
+              {userData?.tipo === 'aluno' ? 'Aluno' : 'Servidor'}
+            </Text>
+          </View>
         </View>
 
         {/* Notificações */}
@@ -91,39 +172,19 @@ export default function Profile() {
         </View>
 
         {/* Logout */}
-        <Pressable
-          style={styles.logoutBtn}
-          onPress={() => router.replace('/')}
-        >
+        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>↩ Sair da conta</Text>
         </Pressable>
       </ScrollView>
 
-      {/* Bottom Nav */}
-      <View style={styles.bottomNav}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/home')}>
-          <Text style={styles.navIcon}>⌂</Text>
-          <Text style={styles.navLabel}>Início</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/calendar')}>
-          <Text style={styles.navIcon}>▦</Text>
-          <Text style={styles.navLabel}>Calendário</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/notices')}>
-          <Text style={styles.navIcon}>◎</Text>
-          <Text style={styles.navLabel}>Editais</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <Text style={styles.navIconActive}>◉</Text>
-          <Text style={styles.navLabelActive}>Perfil</Text>
-        </Pressable>
-      </View>
+      <BottomNav />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F4F0' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F5F4F0' },
   header: {
     backgroundColor: '#1a1a1a',
     paddingTop: 48,
@@ -171,7 +232,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#D3D1C7',
   },
   rowLabel: { fontSize: 12, color: '#888780' },
-  rowValue: { fontSize: 12, color: '#2C2C2A' },
+  rowValue: { fontSize: 12, color: '#2C2C2A', flexShrink: 1, textAlign: 'right', marginLeft: 8 },
   notifBox: {
     backgroundColor: 'white',
     borderWidth: 1,
