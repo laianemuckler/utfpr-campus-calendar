@@ -32,14 +32,16 @@ Aplicativo mobile em React Native para centralizar eventos, prazos acadêmicos e
 #### Tela inicial
 A tela inicial apresenta um resumo dos próximos eventos.
 
-<img src="./docs/tutorial/home.png" alt="home" width="250">
+<img src="./docs/tutorial/home.png" alt="home" width="200">
 
 #### Calendário
 Na tela de calendário é possível ver todos os eventos do mês, navegar para s próximos meses e filtrar por dia.
+
 <img src="./docs/tutorial/calendar.png" alt="calendar" width="200">
 <img src="./docs/tutorial/calendar_by_day.png" alt="calendar by day" width="200">
 
 #### Busca de eventos
+
 Na tela de busca é possível filtrar por categorias fixas como por palavras.
 <img src="./docs/tutorial/search.png" alt="search" width="200">
 <img src="./docs/tutorial/search_subject.png" alt="search subject" width="200">
