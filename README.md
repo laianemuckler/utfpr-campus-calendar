@@ -46,7 +46,7 @@ Na tela de calendário é possível ver todos os eventos do mês, navegar para s
 
 #### Busca de eventos
 Na tela de busca é possível filtrar por categorias fixas e também por palavras-chave.
-<div align="center" style="display: flex; justify-content: center; gap: 10px;">
+<div style="display: flex; justify-content: center; gap: 10px;">
 
   <img src="./docs/tutorial/search.png" width="200">
 
