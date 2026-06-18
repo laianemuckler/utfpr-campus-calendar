@@ -39,7 +39,7 @@ Na tela de calendário é possível ver todos os eventos do mês, navegar para s
 <img src="./docs/tutorial/calendar.png" alt="calendar" width="200">
 <img src="./docs/tutorial/calendar_by_day.png" alt="calendar by day" width="200">
 
-#### Busca de eventos
+#### Busca
 Na tela de busca é possível filtrar por categorias fixas como por palavras.
 <img src="./docs/tutorial/search.png" alt="search" width="200">
 
