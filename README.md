@@ -36,13 +36,23 @@ A tela inicial apresenta um resumo dos próximos eventos.
 
 #### Calendário
 Na tela de calendário é possível ver todos os eventos do mês, navegar para s próximos meses e filtrar por dia.
-<img src="./docs/tutorial/calendar.png" alt="calendar" width="200">
-<img src="./docs/tutorial/calendar_by_day.png" alt="calendar by day" width="200">
+<div style="display: flex; justify-content: center; gap: 10px;">
+
+  <img src="./docs/tutorial/calendar.png" alt="calendar" width="200">
+
+  <img src="./docs/tutorial/calendar_by_day.png" alt="calendar by day" width="200">
+
+</div>
 
 #### Busca de eventos
 Na tela de busca é possível filtrar por categorias fixas e também por palavras-chave.
-<img src="./docs/tutorial/search.png" alt="search" width="200">
-<img src="./docs/tutorial/search_subject.png" alt="search subject" width="200">
+<div align="center" style="display: flex; justify-content: center; gap: 10px;">
+
+  <img src="./docs/tutorial/search.png" width="200">
+
+  <img src="./docs/tutorial/search_subject.png" width="200">
+
+</div>
 
 #### Detalhe de eventos
 É possível visualizar os detalhes de cada evento clicando neles.
