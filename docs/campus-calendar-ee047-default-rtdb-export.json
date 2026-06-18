@@ -1,0 +1,93 @@
+{
+  "events": [
+    null,
+    {
+      "allDay": true,
+      "audience": "curso",
+      "category": "prazo",
+      "curso": "Engenharia de Software",
+      "description": "Prazo final para entrega da versão final do TCC na coordenação do curso.",
+      "endDate": "2026-06-20",
+      "location": "Sala B-204",
+      "responsible": "Coord. de Curso",
+      "startDate": "2026-06-20",
+      "subtitle": "Coordenação · Sala B-204",
+      "title": "Entrega de TCC",
+      "urgent": true
+    },
+    {
+      "allDay": true,
+      "audience": "geral",
+      "category": "evento",
+      "description": "Semana de palestras, workshops e atividades culturais abertas a todos os alunos.",
+      "endDate": "2026-06-26",
+      "location": "Auditório Principal",
+      "responsible": "Diretoria Acadêmica",
+      "startDate": "2026-06-22",
+      "subtitle": "Campus · Auditório Principal",
+      "title": "Semana Acadêmica",
+      "urgent": false
+    },
+    {
+      "allDay": true,
+      "audience": "geral",
+      "category": "matricula",
+      "description": "Período de solicitação de matrícula para o segundo semestre via portal do aluno.",
+      "endDate": "2026-07-05",
+      "location": "Portal do Aluno",
+      "responsible": "Secretaria Acadêmica",
+      "startDate": "2026-07-01",
+      "subtitle": "Portal do Aluno",
+      "title": "Matrícula 2026/2",
+      "urgent": false
+    },
+    {
+      "allDay": true,
+      "audience": "geral",
+      "category": "feriado",
+      "description": "Feriado nacional. Não haverá aulas nem atendimento administrativo.",
+      "endDate": "2026-06-04",
+      "startDate": "2026-06-04",
+      "subtitle": "Sem aulas",
+      "title": "Feriado Nacional — Corpus Christi",
+      "urgent": false
+    },
+    {
+      "allDay": false,
+      "audience": "geral",
+      "category": "evento",
+      "description": "Apresentações públicas dos trabalhos de conclusão de curso do semestre.",
+      "endDate": "2026-06-25",
+      "location": "Auditório B",
+      "responsible": "Coord. de Curso",
+      "startDate": "2026-06-25",
+      "subtitle": "Auditório B",
+      "title": "Defesa de TCC — Banca Pública",
+      "urgent": false
+    },
+    {
+      "allDay": true,
+      "audience": "geral",
+      "category": "prazo",
+      "description": "Inscrições abertas para bolsa de iniciação científica do departamento de elétrica.",
+      "endDate": "2026-06-30",
+      "location": "DAELN",
+      "responsible": "Departamento de Elétrica",
+      "startDate": "2026-06-30",
+      "subtitle": "DAELN · Departamento de Elétrica",
+      "title": "Bolsa de Pesquisa IC",
+      "urgent": false
+    }
+  ],
+  "users": {
+    "i5Kmwu2xBVVvFNlgNBQlSFP2n9m2": {
+      "campus": "Campo Mourão",
+      "criadoEm": "2026-06-16T00:40:25.071Z",
+      "curso": "Engenharia de Software",
+      "email": "jaoturin@alunos.utfpr.edu.br",
+      "nome": "Joao Turin",
+      "periodo": "1º",
+      "tipo": "aluno"
+    }
+  }
+}

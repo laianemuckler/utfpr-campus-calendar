@@ -60,7 +60,6 @@ export default function Profile() {
     router.replace('/');
   };
 
-  // iniciais do nome pro avatar
   const getInitials = (nome: string) => {
     return nome
       .split(' ')

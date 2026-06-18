@@ -28,23 +28,5 @@ export const EVENT_CATEGORIES = {
 
 export const DEFAULT_CAMPUS = 'Dois Vizinhos';
 
-// Dados de exemplo (será substituído por Firestore)
-export const MOCK_EVENTS = [
-  {
-    date: '13 DE MAIO',
-    title: 'Entrega de TCC',
-    location: 'Coordenação · Sala B-204',
-    category: 'Engenharia de Software',
-    color: '#E24B4A',
-  },
-  {
-    date: '15 A 19 DE MAIO',
-    title: 'Semana Acadêmica',
-    location: 'Campus · Auditório Principal',
-    category: 'Todos os cursos',
-    color: '#F5C200',
-  },
-];
-
 export const DOMINIOS_UTFPR = ['@alunos.utfpr.edu.br', '@utfpr.edu.br'];
 

@@ -55,7 +55,6 @@ export default function Register() {
   const [departamento, setDepartamento] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // dropdowns
   const [campusOpen, setCampusOpen] = useState(false);
   const [cursoOpen, setCursoOpen] = useState(false);
   const [periodoOpen, setPeriodoOpen] = useState(false);

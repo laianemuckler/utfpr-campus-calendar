@@ -66,7 +66,6 @@ export default function Login() {
       return;
     }
 
-    // validação de senha mínima
     if (password.length < 6) {
       Alert.alert('Senha fraca', 'A senha deve ter pelo menos 6 caracteres');
       return;

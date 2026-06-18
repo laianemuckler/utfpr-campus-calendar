@@ -34,20 +34,18 @@ interface Event {
   title: string;
   subtitle: string;
   category: string;
-  startDate: string; // "2026-06-20"
+  startDate: string;
   endDate: string;
   location: string | null;
   curso: string | null;
   audience: string;
 }
 
-// helper: "2026-06-20" -> { year: 2026, month: 5, day: 20 }
 function parseDate(dateStr: string) {
   const [year, month, day] = dateStr.split('-').map(Number);
   return { year, month: month - 1, day };
 }
 
-// helper: pad pra formato "2026-06-20"
 function formatDateKey(year: number, month: number, day: number) {
   const m = String(month + 1).padStart(2, '0');
   const d = String(day).padStart(2, '0');
@@ -97,7 +95,6 @@ export default function Calendar() {
     return startKey <= monthKey && endKey >= monthKey;
   });
 
-  // mapeia dia -> cor
   const eventDaysMap: Record<number, string> = {};
   filteredEvents.forEach((event) => {
     const start = parseDate(event.startDate);
