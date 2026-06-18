@@ -26,7 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Monitorar mudanças de autenticação
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -51,7 +50,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     await signOut(auth);
   };
 
-  // Mostrar loading enquanto verifica autenticação
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -67,7 +65,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Hook para usar o contexto
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

@@ -17,7 +17,6 @@ function RootNavigation() {
     return <Redirect href="/" />;
   }
 
-  // Se tá logado, Expo Router renderiza naturalmente
   return null;
 }
 
