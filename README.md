@@ -16,7 +16,7 @@ Aplicativo mobile em React Native para centralizar eventos, prazos acadêmicos e
 
 ---
 
-## Tutarial de uso do aplicativo
+## Tutorial de uso do aplicativo
 #### Acesso ao Sistema
 1. Caso não possua uma conta, selecione Criar uma.
 
